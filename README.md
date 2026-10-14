@@ -35,8 +35,7 @@ tutor-planner/
 │   └── UX-prototype/      # UX prototype files
 ├── assets/              
 ├── src/               
-├── .gitignore
-└── README.md
+└── .gitignore
 ```
 
 ## Important Conventions
