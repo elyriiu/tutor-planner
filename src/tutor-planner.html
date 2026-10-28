@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tutor planner</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700&display=swap">
+<style>
+:root{
+  --blue:#3368A0; --sky:#66A3BF; --mint:#C8DFDB; --paper:#F2EFE7;
+  --bg:var(--paper); --surface:#fff; --ink:#1d3248; --muted:#5d7083; --line:#dcd8cc; --chip:var(--mint); --chip-ink:#1d3248; --on-blue:#fff;
+  color-scheme:light;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#14202c; --surface:#1c2c3b; --ink:#eef2ee; --muted:#9db0bd; --line:#2c4054; --chip:#2d4d62; --chip-ink:#eef2ee; color-scheme:dark;}}
+:root[data-theme="dark"]{--bg:#14202c; --surface:#1c2c3b; --ink:#eef2ee; --muted:#9db0bd; --line:#2c4054; --chip:#2d4d62; --chip-ink:#eef2ee; color-scheme:dark;}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.5 "Nunito Sans",system-ui,-apple-system,"Segoe UI",sans-serif}
+button,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--sky);outline-offset:2px}
+.app{max-width:1100px;margin:0 auto;padding:24px 20px 48px}
+header.top{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin-bottom:24px}
+h1{font-size:1.75rem;font-weight:700;margin:0;letter-spacing:-.01em}
+.btn{border:0;border-radius:999px;padding:10px 18px;font-weight:600;background:var(--blue);color:var(--on-blue);display:inline-flex;align-items:center;gap:8px;transition:background .2s,transform .2s}
+.btn:hover{background:#2a5886}
+.btn:active{transform:scale(.97)}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn.ghost:hover{background:var(--chip)}
+.plus{font-size:1.25rem;line-height:1;font-weight:400}
+.bar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin-bottom:16px}
+.nav{display:flex;align-items:center;gap:8px}
+.nav h2{font-size:1.25rem;font-weight:600;margin:0 8px;min-width:11ch}
+.icon{width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;transition:background .2s}
+.icon:hover{background:var(--chip)}
+.seg{display:inline-flex;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:3px}
+.seg button{border:0;background:transparent;border-radius:999px;padding:6px 16px;font-weight:600;color:var(--muted);transition:background .2s,color .2s}
+.seg button[aria-pressed="true"]{background:var(--blue);color:var(--on-blue)}
+.scroll{overflow-x:auto}
+.grid{display:grid;grid-template-columns:repeat(7,minmax(104px,1fr));gap:6px;min-width:760px}
+.dow{font-weight:600;color:var(--muted);font-size:.875rem;padding:0 4px}
+.cell{background:var(--surface);border:1px solid transparent;border-radius:14px;padding:8px;text-align:left;min-height:104px;display:flex;flex-direction:column;gap:4px;transition:border-color .2s,box-shadow .2s}
+.cell:hover{border-color:var(--sky)}
+.cell.out{opacity:.5}
+.cell.today .num{background:var(--blue);color:var(--on-blue)}
+.num{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:.875rem;font-weight:600}
+.chip{background:var(--chip);color:var(--chip-ink);border-radius:8px;padding:2px 8px;font-size:.8125rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.more{font-size:.8125rem;color:var(--muted);padding-left:4px}
+.week .cell{min-height:260px}
+.week .chip{white-space:normal}
+.list{display:flex;flex-direction:column;gap:10px;margin:0;padding:0;list-style:none}
+.item{background:var(--surface);border-radius:14px;padding:14px 16px;display:grid;grid-template-columns:auto 1fr auto;gap:4px 16px;align-items:center;border-left:5px solid var(--sky)}
+.item time{font-weight:700;color:var(--blue);grid-row:span 2}
+.item b{font-weight:600}
+.item p{margin:0;color:var(--muted);font-size:.9375rem;grid-column:2}
+.item .price{font-weight:600}
+.item .del{grid-column:3;grid-row:2;justify-self:end;border:0;background:none;color:var(--muted);font-size:.875rem;text-decoration:underline;padding:0}
+.empty{color:var(--muted);background:var(--surface);border-radius:14px;padding:24px;text-align:center}
+dialog{border:0;border-radius:20px;padding:0;background:var(--bg);color:var(--ink);width:min(480px,calc(100vw - 24px));max-height:calc(100dvh - 24px);box-shadow:0 20px 60px rgba(20,40,60,.3)}
+dialog::backdrop{background:rgba(29,50,72,.45)}
+dialog[open]{animation:pop .22s ease-out}
+@keyframes pop{from{opacity:0;transform:translateY(10px) scale(.98)}}
+@media (prefers-reduced-motion:reduce){dialog[open]{animation:none}*{transition:none!important}}
+.dlg{padding:22px}
+.dlg-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.dlg-head h3{margin:0;font-size:1.25rem}
+form{display:flex;flex-direction:column;gap:14px}
+label,.lab{display:flex;flex-direction:column;gap:4px;font-weight:600;font-size:.9375rem}
+input[type=text],input[type=time],input[type=date],input[type=number],textarea{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:9px 12px;font-weight:400;width:100%}
+textarea{resize:vertical;min-height:70px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.days{display:flex;flex-wrap:wrap;gap:6px}
+.days input{position:absolute;opacity:0;pointer-events:none}
+.days span{display:inline-block;padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface);font-weight:600;cursor:pointer;transition:background .2s}
+.days input:checked+span{background:var(--blue);border-color:var(--blue);color:var(--on-blue)}
+.days input:focus-visible+span{outline:3px solid var(--sky);outline-offset:2px}
+.hint{font-weight:400;color:var(--muted);font-size:.8125rem}
+.err{color:#b3402f;font-size:.875rem;min-height:1.2em;margin:0}
+.actions{display:flex;justify-content:flex-end;gap:8px}
+@media (max-width:600px){.app{padding:16px 12px 40px}.row{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <h1>Welcome, User!</h1>
+    <button class="btn" id="addBtn" type="button"><span class="plus" aria-hidden="true">+</span> Add lesson</button>
+  </header>
+
+  <section aria-label="Schedule">
+    <div class="bar">
+      <div class="nav">
+        <button class="icon" id="prev" type="button" aria-label="Previous">&#8249;</button>
+        <h2 id="title" aria-live="polite"></h2>
+        <button class="icon" id="next" type="button" aria-label="Next">&#8250;</button>
+        <button class="btn ghost" id="today" type="button">Today</button>
+      </div>
+      <div class="seg" role="group" aria-label="Schedule view">
+        <button type="button" data-view="month">Month</button>
+        <button type="button" data-view="week">Week</button>
+        <button type="button" data-view="day">Day</button>
+      </div>
+    </div>
+    <div class="scroll"><div id="board"></div></div>
+  </section>
+</div>
+
+<dialog id="dayDlg" aria-labelledby="dayTitle">
+  <div class="dlg">
+    <div class="dlg-head"><h3 id="dayTitle"></h3><button class="icon" type="button" data-close aria-label="Close">&times;</button></div>
+    <div id="dayBody"></div>
+  </div>
+</dialog>
+
+<dialog id="addDlg" aria-labelledby="addTitle">
+  <div class="dlg">
+    <div class="dlg-head"><h3 id="addTitle">Add lesson</h3><button class="icon" type="button" data-close aria-label="Close">&times;</button></div>
+    <form id="form" novalidate>
+      <label>Lesson name<input type="text" id="f-name" placeholder="Maths with Sam" required></label>
+      <div class="row">
+        <label>Start time<input type="time" id="f-start" value="16:00" required></label>
+        <label>End time<input type="time" id="f-end" value="17:00" required></label>
+      </div>
+      <div class="lab">Repeats every week on
+        <div class="days" id="f-days"></div>
+      </div>
+      <div class="row">
+        <label>First lesson<input type="date" id="f-from" required></label>
+        <label>Repeat until <span class="hint">optional</span><input type="date" id="f-until"></label>
+      </div>
+      <label>Price per lesson (&euro;)<input type="number" id="f-price" min="0" step="0.5" placeholder="35"></label>
+      <label>Description<textarea id="f-desc" placeholder="Topics, location, notes"></textarea></label>
+      <p class="err" id="err" role="alert"></p>
+      <div class="actions">
+        <button class="btn ghost" type="button" data-close>Cancel</button>
+        <button class="btn" type="submit">Save lesson</button>
+      </div>
+    </form>
+  </div>
+</dialog>
+
+<script>
+(function(){
+  var DOW=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];            // Monday first
+  var jsDay=function(i){return (i+1)%7;};                         // index 0..6 -> Date.getDay()
+  var $=function(s){return document.querySelector(s);};
+  var state={view:'month',cursor:new Date(),lessons:[]};
+
+  try{var saved=localStorage.getItem('tutor-lessons');if(saved)state.lessons=JSON.parse(saved)||[];}catch(e){}
+  function persist(){try{localStorage.setItem('tutor-lessons',JSON.stringify(state.lessons));}catch(e){}}
+
+  function key(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+  function addDays(d,n){var x=new Date(d);x.setDate(x.getDate()+n);return x;}
+  function monday(d){var x=new Date(d.getFullYear(),d.getMonth(),d.getDate());x.setDate(x.getDate()-((x.getDay()+6)%7));return x;}
+  function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+
+  // Lessons that happen on a date (repeat rule is evaluated on the fly)
+  function lessonsOn(d){
+    var k=key(d),g=d.getDay();
+    return state.lessons.filter(function(l){return l.days.indexOf(g)>-1&&k>=l.from&&(!l.until||k<=l.until);})
+      .sort(function(a,b){return a.start<b.start?-1:1;});
+  }
+  function longDate(d){return d.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'});}
+
+  function render(){
+    var c=state.cursor,t=$('#title'),b=$('#board'),html='';
+    document.querySelectorAll('[data-view]').forEach(function(x){x.setAttribute('aria-pressed',x.dataset.view===state.view);});
+    var todayKey=key(new Date());
+
+    function cell(d,cls){
+      var ls=lessonsOn(d),chips=ls.slice(0,cls==='wk'?20:2).map(function(l){return '<span class="chip">'+l.start+' '+esc(l.name)+'</span>';}).join('');
+      var more=cls!=='wk'&&ls.length>2?'<span class="more">+'+(ls.length-2)+' more</span>':'';
+      var out=cls==='out'?' out':'';
+      return '<button type="button" class="cell'+out+(key(d)===todayKey?' today':'')+'" data-date="'+key(d)+'" aria-label="'+longDate(d)+', '+ls.length+' lessons"><span class="num">'+d.getDate()+'</span>'+chips+more+'</button>';
+    }
+    var head='<div class="grid">'+DOW.map(function(n){return '<div class="dow">'+n+'</div>';}).join('');
+
+    if(state.view==='month'){
+      t.textContent=c.toLocaleDateString('en-GB',{month:'long',year:'numeric'});
+      var first=new Date(c.getFullYear(),c.getMonth(),1),start=monday(first),last=new Date(c.getFullYear(),c.getMonth()+1,0);
+      var weeks=Math.ceil(((last-start)/864e5+1)/7);
+      html=head;
+      for(var i=0;i<weeks*7;i++){var d=addDays(start,i);html+=cell(d,d.getMonth()===c.getMonth()?'':'out');}
+      html+='</div>';
+    }else if(state.view==='week'){
+      var s=monday(c),e=addDays(s,6);
+      t.textContent=s.toLocaleDateString('en-GB',{day:'numeric',month:'short'})+' – '+e.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+      html='<div class="week">'+head;
+      for(var j=0;j<7;j++)html+=cell(addDays(s,j),'wk');
+      html+='</div></div>';
+    }else{
+      t.textContent=longDate(c);
+      html=dayList(c,false);
+    }
+    b.innerHTML=html;
+  }
+
+  function dayList(d,withDelete){
+    var ls=lessonsOn(d);
+    if(!ls.length)return '<div class="empty">No lessons on this day. Use “Add lesson” to plan one.</div>';
+    return '<ul class="list">'+ls.map(function(l){
+      return '<li class="item"><time>'+l.start+'–'+l.end+'</time><b>'+esc(l.name)+'</b>'+
+        (l.price!==''?'<span class="price">&euro;'+esc(l.price)+'</span>':'<span></span>')+
+        (l.desc?'<p>'+esc(l.desc)+'</p>':'')+
+        '<button type="button" class="del" data-del="'+l.id+'">Delete series</button></li>';
+    }).join('')+'</ul>';
+  }
+
+  function openDay(k){
+    var p=k.split('-'),d=new Date(+p[0],+p[1]-1,+p[2]);
+    $('#dayTitle').textContent=longDate(d);
+    $('#dayBody').innerHTML=dayList(d,true);
+    $('#dayDlg').showModal();
+  }
+
+  // Navigation
+  function shift(n){
+    var c=state.cursor;
+    if(state.view==='month')state.cursor=new Date(c.getFullYear(),c.getMonth()+n,1);
+    else state.cursor=addDays(c,n*(state.view==='week'?7:1));
+    render();
+  }
+  $('#prev').onclick=function(){shift(-1);};
+  $('#next').onclick=function(){shift(1);};
+  $('#today').onclick=function(){state.cursor=new Date();render();};
+  document.querySelectorAll('[data-view]').forEach(function(btn){btn.onclick=function(){state.view=btn.dataset.view;render();};});
+  $('#board').addEventListener('click',function(e){var c=e.target.closest('[data-date]');if(c)openDay(c.dataset.date);});
+
+  // Dialogs
+  document.querySelectorAll('[data-close]').forEach(function(b){b.onclick=function(){b.closest('dialog').close();};});
+  document.querySelectorAll('dialog').forEach(function(dl){dl.addEventListener('click',function(e){if(e.target===dl)dl.close();});});
+  $('#dayBody').addEventListener('click',function(e){
+    var id=e.target.dataset.del;
+    if(id&&confirm('Delete this lesson and all its repeats?')){
+      state.lessons=state.lessons.filter(function(l){return String(l.id)!==id;});
+      persist();$('#dayDlg').close();render();
+    }
+  });
+
+  $('#f-days').innerHTML=DOW.map(function(n,i){return '<label><input type="checkbox" value="'+jsDay(i)+'"><span>'+n+'</span></label>';}).join('');
+  $('#addBtn').onclick=function(){
+    $('#form').reset();$('#err').textContent='';
+    $('#f-from').value=key(state.view==='day'?state.cursor:new Date());
+    $('#addDlg').showModal();$('#f-name').focus();
+  };
+  $('#form').addEventListener('submit',function(e){
+    e.preventDefault();
+    var name=$('#f-name').value.trim(),st=$('#f-start').value,en=$('#f-end').value,from=$('#f-from').value,until=$('#f-until').value,
+        days=[].slice.call(document.querySelectorAll('#f-days input:checked')).map(function(x){return +x.value;}),err='';
+    if(!name)err='Enter a lesson name.';
+    else if(!st||!en||en<=st)err='End time must be after the start time.';
+    else if(!days.length)err='Pick at least one day of the week.';
+    else if(!from)err='Choose the date of the first lesson.';
+    else if(until&&until<from)err='“Repeat until” must be on or after the first lesson.';
+    if(err){$('#err').textContent=err;return;}
+    state.lessons.push({id:Date.now(),name:name,start:st,end:en,days:days,from:from,until:until,price:$('#f-price').value,desc:$('#f-desc').value.trim()});
+    persist();$('#addDlg').close();
+    var p=from.split('-');state.cursor=new Date(+p[0],+p[1]-1,+p[2]);
+    render();
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
